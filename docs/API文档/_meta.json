@@ -1,0 +1,8 @@
+{
+    "title": "API 文档",
+    "description": "各业务系统对外提供的 HTTP / RPC 接口文档。建议下载到本地用 Typora 或 VS Code 查看。",
+    "files": {
+        "user-service-api.md": "用户中心：注册、登录、信息维护等接口",
+        "order-service-api.md": "订单服务：下单、支付回调、退款接口"
+    }
+}

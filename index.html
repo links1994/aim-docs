@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>团队文档中心</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <!-- Markdown 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="brand">
+                <span class="logo">📚</span>
+                <div>
+                    <h1>团队文档中心</h1>
+                    <p class="tagline">API 文档 · 知识库 · 学习笔记</p>
+                </div>
+            </div>
+            <div class="search-box">
+                <input id="searchInput" type="search" placeholder="🔍 搜索文件名或描述..." autocomplete="off" />
+                <div id="searchResults" class="search-results hidden"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-title">目录</div>
+            <nav id="tree" class="tree"></nav>
+        </aside>
+
+        <section class="content">
+            <div id="breadcrumb" class="breadcrumb"></div>
+            <div id="viewer" class="viewer">
+                <div class="loading">正在加载...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span>由 GitHub Pages 托管 · <a href="https://github.com/links1994/api_doc" target="_blank" rel="noopener">查看仓库</a></span>
+    </footer>
+
+    <script src="assets/app.js"></script>
+</body>
+</html>
