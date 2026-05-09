@@ -1,16 +1,16 @@
 /* ============ 基础 ============ */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --bg: #f8fafc;
+    --primary: #7c3aed;
+    --primary-hover: #6d28d9;
+    --bg: #faf7ff;
     --surface: #ffffff;
-    --border: #e5e7eb;
+    --border: #e9e4f5;
     --text: #1f2937;
     --text-light: #6b7280;
-    --accent: #eff6ff;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --accent: #f3edff;
+    --shadow: 0 1px 3px rgba(76, 29, 149, 0.06), 0 1px 2px rgba(76, 29, 149, 0.04);
+    --shadow-lg: 0 10px 25px rgba(76, 29, 149, 0.12);
     --radius: 10px;
 }
 html, body {
@@ -27,7 +27,7 @@ a:hover { color: var(--primary-hover); text-decoration: underline; }
 
 /* ============ 头部 ============ */
 .site-header {
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #a78bfa 100%);
     color: white;
     padding: 18px 0;
     box-shadow: var(--shadow-lg);

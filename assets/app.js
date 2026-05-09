@@ -13,7 +13,6 @@ const CONFIG = {
     docsRoot: 'docs',
 };
 
-const API_BASE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
 const RAW_BASE = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}`;
 
 // 简易内存缓存
@@ -35,15 +34,26 @@ function formatSize(bytes) {
     return (bytes / 1024 / 1024).toFixed(2) + ' MB';
 }
 
-// ========= GitHub API =========
+// ========= 基于 _meta.json 的目录清单 =========
+// 完全不使用 GitHub Contents API，避免 60 次/小时匿名限额。
+// 规则：每个目录下必须存在 _meta.json，其中 `dirs` 声明子目录，`files` 声明文件。
 async function listDir(path) {
     if (cache.dir.has(path)) return cache.dir.get(path);
-    const url = `${API_BASE}/${encodeURI(path)}?ref=${CONFIG.branch}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`无法加载目录 ${path} (${res.status})`);
-    const data = await res.json();
-    cache.dir.set(path, data);
-    return data;
+    const meta = await loadMeta(path);
+    if (!meta) {
+        throw new Error(`目录 ${path} 缺少 _meta.json 或无法访问`);
+    }
+    const items = [];
+    const dirs = meta.dirs || {};
+    const files = meta.files || {};
+    for (const name of Object.keys(dirs)) {
+        items.push({ name, path: `${path}/${name}`, type: 'dir', size: null });
+    }
+    for (const name of Object.keys(files)) {
+        items.push({ name, path: `${path}/${name}`, type: 'file', size: null });
+    }
+    cache.dir.set(path, items);
+    return items;
 }
 
 async function loadMeta(path) {
