@@ -1,5 +1,5 @@
 {
-    "title": "知识库",
+    "title": "知识WIKI",
     "description": "团队内部技术沉淀，涵盖开发规范、踩坑记录、最佳实践。",
     "files": {
         "git-workflow.md": "团队 Git 分支管理与提交规范"

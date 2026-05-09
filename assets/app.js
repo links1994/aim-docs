@@ -123,8 +123,8 @@ async function renderTree() {
     try {
         const items = await listDir(CONFIG.docsRoot);
         const ul = document.createElement('ul');
-        const visible = items.filter(i => i.name !== '_meta.json').sort(sortItems);
-        for (const item of visible) {
+        // 按 _meta.json 声明顺序渲染，不再按名称重排
+        for (const item of items) {
             ul.appendChild(await buildTreeNode(item, 0));
         }
         root.innerHTML = '';
@@ -158,8 +158,7 @@ async function buildTreeNode(item, depth) {
                 try {
                     const children = await listDir(item.path);
                     childUl.innerHTML = '';
-                    const vis = children.filter(i => i.name !== '_meta.json').sort(sortItems);
-                    for (const c of vis) {
+                    for (const c of children) {
                         childUl.appendChild(await buildTreeNode(c, depth + 1));
                     }
                     childUl.dataset.loaded = '1';
@@ -205,7 +204,7 @@ async function renderDirView(path) {
         const fileDescMap = meta?.files || {};
         const dirDescMap = meta?.dirs || {};
 
-        const visible = items.filter(i => i.name !== '_meta.json').sort(sortItems);
+        const visible = items;
 
         if (visible.length === 0) {
             viewer.innerHTML = `
