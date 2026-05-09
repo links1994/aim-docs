@@ -7,7 +7,7 @@
 
 const CONFIG = {
     owner: 'links1994',
-    repo: 'api_doc',
+    repo: 'links1994.github.io',
     branch: 'main',
     // 文档根目录（站点只展示此目录下内容）
     docsRoot: 'docs',
