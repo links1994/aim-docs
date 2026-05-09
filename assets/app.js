@@ -79,24 +79,38 @@ async function loadRaw(path) {
     return text;
 }
 
-// 跨域资源强制下载：先 fetch 成 blob，再用 blob: URL 触发 <a download>
+// 跨域强制下载：fetch 成 blob 后触发 <a download>。
+// 双保险：iOS/旧版浏览器不支持时，回落到 window.open + 提示手动另存。
 async function downloadFile(url, filename, btn) {
     const originalText = btn ? btn.textContent : '';
     try {
         if (btn) { btn.textContent = '下载中...'; btn.style.pointerEvents = 'none'; }
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
+
+        // iOS Safari 不支持 a.download，直接 open blob 即可
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+            return;
+        }
+
         const objUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objUrl;
         a.download = filename;
+        a.rel = 'noopener';
+        a.style.display = 'none';
         document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+        // 直接 dispatch 一个可信任的 click，避免手势丢失
+        a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(objUrl);
+        }, 1500);
     } catch (e) {
-        alert(`下载失败：${e.message}`);
+        console.error('[downloadFile] 失败', e);
+        alert(`下载失败：${e.message}\n请打开 F12 → Console 查看具体错误。`);
     } finally {
         if (btn) { btn.textContent = originalText; btn.style.pointerEvents = ''; }
     }
