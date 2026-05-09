@@ -47,7 +47,11 @@ async function listDir(path) {
     const dirs = meta.dirs || {};
     const files = meta.files || {};
     for (const name of Object.keys(dirs)) {
-        items.push({ name, path: `${path}/${name}`, type: 'dir', size: null });
+        const entry = dirs[name];
+        const extra = typeof entry === 'string'
+            ? { description: entry }
+            : { description: entry.description || '', icon: entry.icon, color: entry.color, accent: entry.accent };
+        items.push({ name, path: `${path}/${name}`, type: 'dir', size: null, ...extra });
     }
     for (const name of Object.keys(files)) {
         items.push({ name, path: `${path}/${name}`, type: 'file', size: null });
@@ -116,70 +120,35 @@ async function downloadFile(url, filename, btn) {
     }
 }
 
-// ========= 渲染：目录树 =========
+// ========= 渲染：侧边栏分类标签（平铺，不递归）=========
 async function renderTree() {
     const root = $('#tree');
     root.innerHTML = '<div style="padding:12px;font-size:13px;color:#6b7280">加载中...</div>';
     try {
         const items = await listDir(CONFIG.docsRoot);
-        const ul = document.createElement('ul');
-        // 按 _meta.json 声明顺序渲染，不再按名称重排
-        for (const item of items) {
-            ul.appendChild(await buildTreeNode(item, 0));
-        }
         root.innerHTML = '';
-        root.appendChild(ul);
+        const wrap = document.createElement('div');
+        wrap.className = 'tab-list';
+        for (const item of items) {
+            if (item.type !== 'dir') continue;
+            const tab = document.createElement('div');
+            tab.className = 'sidebar-tab';
+            tab.dataset.path = item.path;
+            if (item.color) tab.style.setProperty('--tab-bg', item.color);
+            if (item.accent) tab.style.setProperty('--tab-accent', item.accent);
+            tab.innerHTML = `
+                <span class="tab-icon">${item.icon || '📁'}</span>
+                <div class="tab-text">
+                    <div class="tab-name">${escapeHtml(item.name)}</div>
+                    ${item.description ? `<div class="tab-desc">${escapeHtml(item.description)}</div>` : ''}
+                </div>`;
+            tab.addEventListener('click', () => navigate(item.path));
+            wrap.appendChild(tab);
+        }
+        root.appendChild(wrap);
     } catch (e) {
         root.innerHTML = `<div style="padding:10px;color:#dc2626;font-size:13px">${escapeHtml(e.message)}</div>`;
     }
-}
-
-async function buildTreeNode(item, depth) {
-    const li = document.createElement('li');
-    const node = document.createElement('div');
-    node.className = 'node';
-    node.dataset.path = item.path;
-
-    if (item.type === 'dir') {
-        const meta = await loadMeta(item.path);
-        const label = meta?.title || item.name;
-        node.innerHTML = `<span class="caret">▶</span><span class="icon">📁</span><span class="label">${escapeHtml(label)}</span>`;
-        const childUl = document.createElement('ul');
-        childUl.style.display = 'none';
-        li.appendChild(node);
-        li.appendChild(childUl);
-
-        node.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const caret = node.querySelector('.caret');
-            const isOpen = childUl.style.display !== 'none';
-            if (!isOpen && !childUl.dataset.loaded) {
-                childUl.innerHTML = '<li style="padding-left:14px;color:#9ca3af;font-size:12px">加载中...</li>';
-                try {
-                    const children = await listDir(item.path);
-                    childUl.innerHTML = '';
-                    for (const c of children) {
-                        childUl.appendChild(await buildTreeNode(c, depth + 1));
-                    }
-                    childUl.dataset.loaded = '1';
-                } catch (err) {
-                    childUl.innerHTML = `<li style="color:#dc2626;font-size:12px">${escapeHtml(err.message)}</li>`;
-                }
-            }
-            childUl.style.display = isOpen ? 'none' : 'block';
-            caret.classList.toggle('open', !isOpen);
-            navigate(item.path);
-        });
-    } else {
-        const icon = isMarkdown(item.name) ? '📄' : '📎';
-        node.innerHTML = `<span class="caret" style="visibility:hidden">·</span><span class="icon">${icon}</span><span class="label">${escapeHtml(item.name)}</span>`;
-        li.appendChild(node);
-        node.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navigate(item.path);
-        });
-    }
-    return li;
 }
 
 function sortItems(a, b) {
@@ -188,8 +157,11 @@ function sortItems(a, b) {
 }
 
 function highlightTreeNode(path) {
-    document.querySelectorAll('.tree .node').forEach(n => {
-        n.classList.toggle('active', n.dataset.path === path);
+    // 高亮当前所属的顶级分类标签（例如路径 docs/API文档/xxx 则高亮 API文档 tab）
+    document.querySelectorAll('.sidebar-tab').forEach(el => {
+        const tabPath = el.dataset.path;
+        const active = path === tabPath || path.startsWith(tabPath + '/');
+        el.classList.toggle('active', active);
     });
 }
 

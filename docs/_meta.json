@@ -1,8 +1,18 @@
 {
     "title": "团队文档中心",
-    "description": "浏览和下载 API 文档、知识WIKI 等资料。在左侧目录选择分类，或使用顶部搜索。",
+    "description": "浏览和下载 API 文档、知识WIKI 等资料。在左侧分类标签选择，或使用顶部搜索。",
     "dirs": {
-        "API文档": "各业务系统对外 API 接口的详细说明",
-        "知识WIKI": "团队内部沉淀的技术知识、最佳实践"
+        "API文档": {
+            "description": "各业务系统对外 API 接口的详细说明",
+            "icon": "🧩",
+            "color": "#ede9fe",
+            "accent": "#6d28d9"
+        },
+        "知识WIKI": {
+            "description": "团队内部沉淀的技术知识、最佳实践",
+            "icon": "📖",
+            "color": "#fef3c7",
+            "accent": "#b45309"
+        }
     }
 }
