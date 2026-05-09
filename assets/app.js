@@ -79,6 +79,29 @@ async function loadRaw(path) {
     return text;
 }
 
+// 跨域资源强制下载：先 fetch 成 blob，再用 blob: URL 触发 <a download>
+async function downloadFile(url, filename, btn) {
+    const originalText = btn ? btn.textContent : '';
+    try {
+        if (btn) { btn.textContent = '下载中...'; btn.style.pointerEvents = 'none'; }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+    } catch (e) {
+        alert(`下载失败：${e.message}`);
+    } finally {
+        if (btn) { btn.textContent = originalText; btn.style.pointerEvents = ''; }
+    }
+}
+
 // ========= 渲染：目录树 =========
 async function renderTree() {
     const root = $('#tree');
@@ -204,7 +227,7 @@ async function renderDirView(path) {
                             <span style="font-size:11px;color:#9ca3af">${formatSize(item.size)}</span>
                             <div style="display:flex;gap:6px">
                                 ${isMarkdown(item.name) ? `<button class="btn" data-action="preview">预览</button>` : ''}
-                                <a class="btn primary" href="${rawUrl}" download="${escapeHtml(item.name)}" data-action="download">下载</a>
+                                <button class="btn primary" data-action="download" data-url="${rawUrl}" data-name="${escapeHtml(item.name)}">下载</button>
                             </div>
                         </div>
                     </div>`;
@@ -222,8 +245,12 @@ async function renderDirView(path) {
             const itemPath = card.dataset.path;
             const type = card.dataset.type;
             card.addEventListener('click', (e) => {
-                const dl = e.target.closest('a[data-action="download"]');
-                if (dl) return;
+                const dlBtn = e.target.closest('button[data-action="download"]');
+                if (dlBtn) {
+                    e.stopPropagation();
+                    downloadFile(dlBtn.dataset.url, dlBtn.dataset.name, dlBtn);
+                    return;
+                }
                 navigate(itemPath);
             });
         });
@@ -246,8 +273,11 @@ async function renderFileView(path) {
                 <div class="big-icon">📎</div>
                 <h3>${escapeHtml(name)}</h3>
                 <p>该文件类型不支持在线预览</p>
-                <a class="btn primary" href="${rawUrl}" download="${escapeHtml(name)}">⬇ 下载文件</a>
+                <button class="btn primary" id="dlBtn">⬇ 下载文件</button>
             </div>`;
+        viewer.querySelector('#dlBtn').addEventListener('click', (e) => {
+            downloadFile(rawUrl, name, e.currentTarget);
+        });
         return;
     }
 
@@ -257,9 +287,12 @@ async function renderFileView(path) {
         viewer.innerHTML = `
             <div class="file-toolbar">
                 <a class="btn" href="${ghUrl}" target="_blank" rel="noopener">在 GitHub 打开</a>
-                <a class="btn primary" href="${rawUrl}" download="${escapeHtml(name)}">⬇ 下载原文件</a>
+                <button class="btn primary" id="dlBtn">⬇ 下载原文件</button>
             </div>
             <article class="markdown" id="mdContent">${html}</article>`;
+        viewer.querySelector('#dlBtn').addEventListener('click', (e) => {
+            downloadFile(rawUrl, name, e.currentTarget);
+        });
         if (window.hljs) viewer.querySelectorAll('pre code').forEach(b => window.hljs.highlightElement(b));
     } catch (e) {
         viewer.innerHTML = `<div class="error">加载失败：${escapeHtml(e.message)}</div>`;
