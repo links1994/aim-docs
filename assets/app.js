@@ -63,7 +63,7 @@ async function listDir(path) {
 async function loadMeta(path) {
     if (cache.meta.has(path)) return cache.meta.get(path);
     try {
-        const res = await fetch(`${RAW_BASE}/${encodeURI(path)}/_meta.json`);
+        const res = await fetch(`${RAW_BASE}/${encodeURI(path)}/_meta.json`, { cache: 'no-store' });
         if (!res.ok) { cache.meta.set(path, null); return null; }
         const json = await res.json();
         cache.meta.set(path, json);
