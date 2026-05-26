@@ -7,7 +7,7 @@
 
 const CONFIG = {
     owner: 'links1994',
-    repo: 'links1994.github.io',
+    repo: 'aim-docs',
     branch: 'main',
     // 文档根目录（站点只展示此目录下内容）
     docsRoot: 'docs',
