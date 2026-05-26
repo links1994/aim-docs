@@ -16,13 +16,13 @@
 4. 保存后等待 1-2 分钟，访问：
 
 ```
-https://links1994.github.io/api_doc/
+https://links1994.github.io/aim-docs/
 ```
 
 ## 📁 目录结构
 
 ```
-api_doc/
+aim-docs/
 ├── index.html              # 主页面
 ├── assets/
 │   ├── style.css           # 样式
@@ -31,9 +31,17 @@ api_doc/
 │   ├── _meta.json          # 根目录元信息（首页展示）
 │   ├── API文档/
 │   │   ├── _meta.json
-│   │   ├── user-service-api.md
-│   │   └── order-service-api.md
-│   └── 知识库/
+│   │   ├── APP端&小程序/
+│   │   │   └── _meta.json
+│   │   ├── 商城后台管理/
+│   │   │   ├── _meta.json
+│   │   │   ├── mall-admin-openapi.yaml
+│   │   │   └── 售后管理-AftersaleAdminControllerApi.md
+│   │   └── 商家后台管理/
+│   │       ├── _meta.json
+│   │       ├── mall-tob-service-openapi.yaml
+│   │       └── 售后管理-AftersaleMerchantControllerApi.md
+│   └── 知识WIKI/
 │       ├── _meta.json
 │       └── git-workflow.md
 ├── .nojekyll               # 禁用 Jekyll 处理
@@ -73,7 +81,7 @@ api_doc/
 ```js
 const CONFIG = {
     owner: 'links1994',
-    repo: 'api_doc',
+    repo: 'aim-docs',
     branch: 'main',
     docsRoot: 'docs',
 };
