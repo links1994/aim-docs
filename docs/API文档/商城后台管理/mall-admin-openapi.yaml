@@ -1,0 +1,527 @@
+openapi: 3.0.3
+info:
+  title: 售后管理 API（mall-admin BFF）
+  description: |
+    管理后台售后管理接口，供运营人员调用。
+    - 售后列表查询（分页）
+    - 仲裁工单列表查询
+    - 修改运营备注
+    - 售后状态/类型枚举查询
+  version: 1.0.0
+servers:
+  - url: /mall-admin
+    description: 网关地址（前端调用地址）
+tags:
+  - name: 售后管理（管理后台）
+    description: 售后管理（管理后台视角）
+paths:
+  /api/admin/aftersale/page-list:
+    post:
+      tags:
+        - 售后管理（管理后台）
+      summary: 售后列表查询（管理后台）
+      description: 管理后台分页查询售后单列表，支持多维度筛选
+      operationId: pageListAftersaleForAdmin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AftersaleAdminPageApiRequest'
+            example:
+              statusList: [10, 20]
+              aftersaleTypeList: ["RETURN_AND_REFUND"]
+              merchantId: 2001
+              aftersaleNo: "AS2026"
+              applyStartTime: "2026-05-01 00:00:00"
+              applyEndTime: "2026-05-31 23:59:59"
+              slaTimeoutHours: 4
+              minRefundAmount: 10.00
+              maxRefundAmount: 1000.00
+              pageNum: 1
+              pageSize: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDataAdminListItem'
+  /api/admin/aftersale/arbitration/page-list:
+    post:
+      tags:
+        - 售后管理（管理后台）
+      summary: 仲裁工单列表查询
+      description: 管理后台分页查询仲裁工单列表（仅 status IN 60/70/80 仲裁段）
+      operationId: pageListArbitration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArbitrationPageApiRequest'
+            example:
+              statusList: [60, 70, 80]
+              keyword: "AS2026"
+              pageNum: 1
+              pageSize: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDataArbitrationListItem'
+  /api/admin/aftersale/update-note:
+    post:
+      tags:
+        - 售后管理（管理后台）
+      summary: 修改运营备注
+      description: 运营人员对售后单添加或修改运营备注信息
+      operationId: updateAdminNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminNoteApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              adminNote: "已联系商家确认退款时间"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/admin/aftersale/enums/status:
+    get:
+      tags:
+        - 售后管理（管理后台）
+      summary: 售后状态枚举
+      description: 查询售后状态枚举列表（供前端下拉筛选）
+      operationId: getAdminStatusEnums
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusOptionList'
+  /api/admin/aftersale/enums/type:
+    get:
+      tags:
+        - 售后管理（管理后台）
+      summary: 售后类型枚举
+      description: 查询售后类型枚举列表（供前端下拉筛选）
+      operationId: getAdminTypeEnums
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeOptionList'
+components:
+  schemas:
+    AftersaleAdminPageApiRequest:
+      type: object
+      description: 管理后台售后列表查询请求
+      properties:
+        statusList:
+          type: array
+          description: 售后状态列表（多状态筛选；单状态传单元素列表）
+          items:
+            type: integer
+          example: [10, 20]
+        aftersaleTypeList:
+          type: array
+          description: 售后类型列表（多类型筛选；单类型传单元素列表）
+          items:
+            type: string
+          example: ["RETURN_AND_REFUND", "EXCHANGE"]
+        aftersaleNo:
+          type: string
+          description: 售后单号（前缀 LIKE 匹配）
+          example: "AS2026"
+        subOrderSn:
+          type: string
+          description: 子订单号（前缀 LIKE 匹配）
+          example: "SUB202605"
+        productCode:
+          type: string
+          description: 商品编码（前缀 LIKE 匹配）
+          example: "SKU0001"
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID
+          example: 2001
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+          example: 10001
+        applyStartTime:
+          type: string
+          format: date-time
+          description: 申请时间-起
+          example: "2026-05-01 00:00:00"
+        applyEndTime:
+          type: string
+          format: date-time
+          description: 申请时间-止
+          example: "2026-05-31 23:59:59"
+        slaTimeoutHours:
+          type: integer
+          description: SLA 临期阈值（小时）。仅 {4, 12, 24} 生效；其它值不抛错，按不过滤处理
+          enum: [4, 12, 24]
+          example: 4
+        minRefundAmount:
+          type: number
+          format: decimal
+          description: 最低申请退款金额
+          example: 10.00
+        maxRefundAmount:
+          type: number
+          format: decimal
+          description: 最高申请退款金额
+          example: 1000.00
+        pageNum:
+          type: integer
+          description: 页码（默认1）
+          default: 1
+          example: 1
+        pageSize:
+          type: integer
+          description: 每页条数（默认20）
+          default: 20
+          example: 20
+    ArbitrationPageApiRequest:
+      type: object
+      description: 仲裁列表查询请求
+      properties:
+        statusList:
+          type: array
+          description: 仲裁状态列表（限定：60/70/80）
+          items:
+            type: integer
+        keyword:
+          type: string
+          description: 关键词（售后单号/订单号模糊搜索）
+          example: "AS2026"
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID
+          example: 2001
+        startTime:
+          type: string
+          format: date-time
+          description: 查询开始时间
+          example: "2026-05-01 00:00:00"
+        endTime:
+          type: string
+          format: date-time
+          description: 查询结束时间
+          example: "2026-05-31 23:59:59"
+        pageNum:
+          type: integer
+          description: 页码（默认1）
+          default: 1
+          example: 1
+        pageSize:
+          type: integer
+          description: 每页条数（默认20）
+          default: 20
+          example: 20
+        sortField:
+          type: string
+          description: 排序字段（白名单：createTime/arbitrationApplyTime）
+          example: "createTime"
+        sortOrder:
+          type: string
+          description: 排序方向：asc/desc
+          example: "desc"
+    UpdateAdminNoteApiRequest:
+      type: object
+      description: 修改运营备注请求
+      required:
+        - aftersaleNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        adminNote:
+          type: string
+          description: 运营备注内容
+          example: "已联系商家确认退款时间"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 30001
+    AftersaleAdminListItem:
+      type: object
+      description: 管理后台售后列表项
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        orderSn:
+          type: string
+          description: 订单号
+          example: "ON20260518000001"
+        subOrderSn:
+          type: string
+          description: 子订单号
+          example: "SUB20260518000001"
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+          example: 10001
+        merchantName:
+          type: string
+          description: 商家名称
+          example: "XX旗舰店"
+        status:
+          type: integer
+          description: 主状态编码
+          example: 10
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PENDING_MERCHANT_AUDIT"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "待商家审核"
+        aftersaleType:
+          type: string
+          description: 售后类型编码
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeName:
+          type: string
+          description: 售后类型枚举名
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文文案
+          example: "退货退款"
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+          example: 100.00
+        slaDeadline:
+          type: string
+          format: date-time
+          description: SLA截止时间
+          example: "2026-05-20 10:00:00"
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+    ArbitrationListItem:
+      type: object
+      description: 仲裁列表项
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        orderSn:
+          type: string
+          description: 订单号
+          example: "ON20260518000001"
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+          example: 10001
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID
+          example: 2001
+        merchantName:
+          type: string
+          description: 商家名称
+          example: "XX旗舰店"
+        status:
+          type: integer
+          description: 主状态编码
+          example: 80
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PLATFORM_ARBITRATION"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "平台介入中"
+        aftersaleType:
+          type: string
+          description: 售后类型编码
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeName:
+          type: string
+          description: 售后类型枚举名
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文文案
+          example: "退货退款"
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+          example: 100.00
+        arbitrationDeadline:
+          type: string
+          format: date-time
+          description: 仲裁截止时间
+          example: "2026-05-25 10:00:00"
+        arbitrationApplyTime:
+          type: string
+          format: date-time
+          description: 申请仲裁时间
+          example: "2026-05-20 10:00:00"
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+    AftersaleStatusOptionDTO:
+      type: object
+      description: 售后状态枚举选项
+      properties:
+        code:
+          type: integer
+          description: 状态编码
+          example: 10
+        text:
+          type: string
+          description: 状态文案
+          example: "待商家审核"
+    AftersaleTypeOptionDTO:
+      type: object
+      description: 售后类型枚举选项
+      properties:
+        code:
+          type: string
+          description: 类型编码
+          example: "RETURN_AND_REFUND"
+        text:
+          type: string
+          description: 类型文案
+          example: "退货退款"
+    StatusOptionList:
+      type: object
+      description: 状态枚举列表响应
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AftersaleStatusOptionDTO'
+    TypeOptionList:
+      type: object
+      description: 类型枚举列表响应
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AftersaleTypeOptionDTO'
+    PageDataAdminListItem:
+      type: object
+      description: 分页响应（管理后台售后列表）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: object
+          description: 分页数据
+          properties:
+            totalCount:
+              type: integer
+              format: int64
+              description: 总记录数
+              example: 100
+            items:
+              type: array
+              description: 列表数据
+              items:
+                $ref: '#/components/schemas/AftersaleAdminListItem'
+    PageDataArbitrationListItem:
+      type: object
+      description: 分页响应（仲裁列表）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: object
+          description: 分页数据
+          properties:
+            totalCount:
+              type: integer
+              format: int64
+              description: 总记录数
+              example: 100
+            items:
+              type: array
+              description: 列表数据
+              items:
+                $ref: '#/components/schemas/ArbitrationListItem'
+    CommonResultVoid:
+      type: object
+      description: 通用响应（无数据）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: null
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 网关统一鉴权 Token

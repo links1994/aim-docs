@@ -1,0 +1,501 @@
+openapi: 3.0.3
+info:
+  title: 商家售后 API（mall-tob-service BFF）
+  description: |
+    商家售后订单管理接口，供商家端工作台调用。
+    - 售后列表查询（分页）
+    - 商家工作台统计
+    - 商家审核（通过/拒绝）
+    - 商家发货/重新发货
+    - 商家备注
+    - 售后状态/类型枚举查询
+  version: 1.5.0
+servers:
+  - url: /mall-merchant
+    description: 网关地址（前端调用地址）
+tags:
+  - name: 商家售后
+    description: 商家售后订单管理（商家视角）
+paths:
+  /api/merchant/aftersale/page-list:
+    post:
+      tags:
+        - 商家售后
+      summary: 售后列表查询
+      description: 商家分页查询售后单列表，支持状态/类型多选筛选，固定按申请时间倒序
+      operationId: pageListAftersale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AftersaleMerchantPageApiRequest'
+            example:
+              merchantId: 2001
+              aftersaleNo: "AS2026"
+              statusList: [10, 20]
+              pageNum: 1
+              pageSize: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDataMerchantListItem'
+  /api/merchant/aftersale/dashboard:
+    get:
+      tags:
+        - 商家售后
+      summary: 商家售后仪表盘
+      description: 获取商家工作台统计数据，包括待审核数、待验货数、SLA预警数等
+      operationId: getDashboard
+      parameters:
+        - name: merchantId
+          in: query
+          required: true
+          description: 商家ID
+          schema:
+            type: integer
+            format: int64
+            example: 2001
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AftersaleDashboardResponse'
+  /api/merchant/aftersale/update-note:
+    post:
+      tags:
+        - 商家售后
+      summary: 修改商家备注
+      description: 商家对售后单添加或修改备注信息
+      operationId: updateMerchantNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMerchantNoteApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              merchantNote: "客户多次投诉，优先处理"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/merchant/aftersale/audit:
+    post:
+      tags:
+        - 商家售后
+      summary: 商家审核（通过/拒绝）
+      description: 商家审核售后申请，通过或拒绝（拒绝需填写理由）
+      operationId: merchantAudit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantAuditApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              operatorId: 20001
+              operatorType: 2
+              approveResult: 1
+              rejectReason: null
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/merchant/aftersale/ship:
+    post:
+      tags:
+        - 商家售后
+      summary: 换货发货
+      description: 商家填写换货物流信息，发货给用户（支持重新发货）
+      operationId: merchantShip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantShipApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              logisticsCompany: "顺丰速运"
+              logisticsNo: "SF9876543210"
+              operatorId: 20001
+              operatorType: 2
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/merchant/aftersale/enums/status:
+    get:
+      tags:
+        - 商家售后
+      summary: 售后状态枚举
+      description: 查询售后状态枚举列表（供前端下拉筛选）
+      operationId: getStatusEnums
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusOptionList'
+  /api/merchant/aftersale/enums/type:
+    get:
+      tags:
+        - 商家售后
+      summary: 售后类型枚举
+      description: 查询售后类型枚举列表（供前端下拉筛选）
+      operationId: getTypeEnums
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeOptionList'
+components:
+  schemas:
+    AftersaleMerchantPageApiRequest:
+      type: object
+      description: 商家售后列表查询请求
+      required:
+        - merchantId
+      properties:
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID（必填）
+          example: 2001
+        aftersaleNo:
+          type: string
+          description: 售后单号（前缀 LIKE 匹配）
+          example: "AS2026"
+        subOrderSn:
+          type: string
+          description: 子订单号（前缀 LIKE 匹配）
+          example: "SO202605"
+        statusList:
+          type: array
+          description: 售后状态列表（多状态筛选；单状态传单元素列表）
+          items:
+            type: integer
+            example: 10
+        aftersaleTypeList:
+          type: array
+          description: 售后类型列表（多类型筛选；单类型传单元素列表）
+          items:
+            type: string
+            example: "RETURN_AND_REFUND"
+        pageNum:
+          type: integer
+          description: 页码（默认1）
+          default: 1
+          example: 1
+        pageSize:
+          type: integer
+          description: 每页条数（默认20）
+          default: 20
+          example: 20
+    MerchantAuditApiRequest:
+      type: object
+      description: 商家审核请求（通过/拒绝）
+      required:
+        - aftersaleNo
+        - operatorId
+        - operatorType
+        - approveResult
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 20001
+        operatorType:
+          type: integer
+          format: int32
+          description: 操作人类型：1=user 2=merchant 3=admin
+          example: 2
+        approveResult:
+          type: integer
+          format: int32
+          description: 审核结果：1=通过, 2=拒绝
+          example: 1
+        rejectReason:
+          type: string
+          description: 拒绝理由（approveResult=2 时必填，10~200字）
+          example: "商品已过退货期限，不符合退货条件"
+    MerchantShipApiRequest:
+      type: object
+      description: 换货发货请求
+      required:
+        - aftersaleNo
+        - logisticsNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        logisticsCompany:
+          type: string
+          description: 物流公司
+          example: "顺丰速运"
+        logisticsNo:
+          type: string
+          description: 物流单号
+          example: "SF9876543210"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 20001
+        operatorType:
+          type: integer
+          format: int32
+          description: 操作人类型：1=user 2=merchant 3=admin
+          example: 2
+    UpdateMerchantNoteApiRequest:
+      type: object
+      description: 修改商家备注请求
+      required:
+        - aftersaleNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        merchantNote:
+          type: string
+          description: 商家备注内容
+          example: "客户多次投诉，优先处理"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 20001
+        operatorType:
+          type: integer
+          format: int32
+          description: 操作人类型：1=user 2=merchant 3=admin
+          example: 2
+    AftersaleMerchantListItem:
+      type: object
+      description: 商家售后列表项
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        subOrderSn:
+          type: string
+          description: 子订单号
+          example: "SO20260518000001"
+        productCdn:
+          type: string
+          description: 商品主图 CDN 前缀
+          example: "https://imgcdn.aimkeji.com"
+        productImageKey:
+          type: string
+          description: 商品主图 OSS Key
+          example: "product/2026/05/abc123.jpg"
+        skuCode:
+          type: string
+          description: SKU编码
+          example: "SKU00001234"
+        skuName:
+          type: string
+          description: SKU名称
+          example: "夏季新款短袖T恤 白色 XL"
+        status:
+          type: integer
+          description: 主状态编码
+          example: 10
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PENDING_MERCHANT_AUDIT"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "待商家审核"
+        aftersaleType:
+          type: string
+          description: 售后类型编码
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeName:
+          type: string
+          description: 售后类型枚举名
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文文案
+          example: "退货退款"
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+          example: 100.00
+        applyRefundQuantity:
+          type: integer
+          description: 申请退款数量
+          example: 1
+        slaDeadline:
+          type: string
+          format: date-time
+          description: SLA截止时间
+          example: "2026-05-20 10:00:00"
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+    AftersaleDashboardResponse:
+      type: object
+      description: 商家工作台统计响应
+      properties:
+        pendingAuditCount:
+          type: integer
+          description: 待审核数量
+          example: 5
+        pendingInspectCount:
+          type: integer
+          description: 待验货数量
+          example: 3
+        pendingShipCount:
+          type: integer
+          description: 待发货数量（换货）
+          example: 2
+        todayApprovedCount:
+          type: integer
+          description: 今日审核通过数量
+          example: 10
+        slaWarningCount:
+          type: integer
+          description: SLA预警数量
+          example: 1
+        totalAftersaleAmount:
+          type: number
+          format: decimal
+          description: 累计售后金额
+          example: 15000.00
+    AftersaleStatusOptionDTO:
+      type: object
+      description: 售后状态枚举选项
+      properties:
+        code:
+          type: integer
+          description: 状态编码
+          example: 10
+        text:
+          type: string
+          description: 状态文案
+          example: "待商家审核"
+    AftersaleTypeOptionDTO:
+      type: object
+      description: 售后类型枚举选项
+      properties:
+        code:
+          type: string
+          description: 类型编码
+          example: "RETURN_AND_REFUND"
+        text:
+          type: string
+          description: 类型文案
+          example: "退货退款"
+    StatusOptionList:
+      type: object
+      description: 状态枚举列表响应
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AftersaleStatusOptionDTO'
+    TypeOptionList:
+      type: object
+      description: 类型枚举列表响应
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AftersaleTypeOptionDTO'
+    PageDataMerchantListItem:
+      type: object
+      description: 分页响应（商家售后列表）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: object
+          description: 分页数据
+          properties:
+            totalCount:
+              type: integer
+              format: int64
+              description: 总记录数
+              example: 100
+            items:
+              type: array
+              description: 列表数据
+              items:
+                $ref: '#/components/schemas/AftersaleMerchantListItem'
+    CommonResultVoid:
+      type: object
+      description: 通用响应（无数据）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: null
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 网关统一鉴权 Token
