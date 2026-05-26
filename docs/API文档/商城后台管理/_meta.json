@@ -1,4 +1,8 @@
 {
     "title": "商城后台管理",
-    "description": "商城运营后台管理接口文档"
+    "description": "商城运营后台管理接口文档",
+    "files": {
+        "mall-admin-openapi.yaml": "商城管理 API 规范文件",
+        "售后管理-AftersaleAdminControllerApi.md": "售后管理接口文档"
+    }
 }

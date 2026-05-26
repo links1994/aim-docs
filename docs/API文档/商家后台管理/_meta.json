@@ -1,4 +1,8 @@
 {
     "title": "商家后台管理",
-    "description": "商家端后台管理接口文档"
+    "description": "商家端后台管理接口文档",
+    "files": {
+        "mall-tob-service-openapi.yaml": "商家服务 API 规范文件",
+        "售后管理-AftersaleMerchantControllerApi.md": "商家售后管理接口文档"
+    }
 }

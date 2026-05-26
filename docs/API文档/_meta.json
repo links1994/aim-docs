@@ -1,23 +1,8 @@
 {
     "title": "API 文档",
     "description": "各业务系统对外提供的 HTTP / RPC 接口文档。建议下载到本地用 Typora 或 VS Code 查看。",
-    "dirs": {
-        "APP端&小程序": {
-            "description": "移动端App、小程序等客户端接口"
-        },
-        "商城后台管理": {
-            "description": "商城运营后台管理接口",
-            "files": {
-                "mall-admin-openapi.yaml": "商城管理 API 规范文件",
-                "售后管理-AftersaleAdminControllerApi.md": "售后管理接口文档"
-            }
-        },
-        "商家后台管理": {
-            "description": "商家端后台管理接口",
-            "files": {
-                "mall-tob-service-openapi.yaml": "商家服务 API 规范文件",
-                "售后管理-AftersaleMerchantControllerApi.md": "商家售后管理接口文档"
-            }
-        }
+    "files": {
+        "user-service-api.md": "用户中心：注册、登录、信息维护等接口",
+        "order-service-api.md": "订单服务：下单、支付回调、退款接口"
     }
 }
