@@ -8,7 +8,7 @@ info:
     - 用户申请平台介入
     - 售后详情查询
     - 快递公司列表查询（本期仅定义接口）
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: /mall-toc-service
     description: 网关地址（前端调用地址）
@@ -424,6 +424,8 @@ components:
           type: string
           description: 问题描述
           example: "商品有质量问题"
+        orderInfo:
+          $ref: '#/components/schemas/TocOrderInfo'
         attachmentKeys:
           type: array
           description: 凭证图片OSS Key列表
@@ -564,6 +566,26 @@ components:
           type: string
           description: 快递公司名称
           example: "顺丰速运"
+    TocOrderInfo:
+      type: object
+      description: 售后订单商品信息
+      properties:
+        skuCode:
+          type: string
+          description: SKU编码
+          example: "SKU20260518000001"
+        skuName:
+          type: string
+          description: 商品名称
+          example: "iPhone 15 Pro Max 256G"
+        productImage:
+          type: string
+          description: 商品主图（CDN URL）
+          example: "https://imgcdn.aimkeji.com/product/iphone15.jpg"
+        quantity:
+          type: integer
+          description: 购买数量
+          example: 1
     CommonResultVoid:
       type: object
       description: 通用响应（无数据）

@@ -9,7 +9,7 @@ info:
     - 商家发货/重新发货
     - 商家备注
     - 售后状态/类型枚举查询
-  version: 1.5.0
+  version: 1.7.0
 servers:
   - url: /mall-merchant
     description: 网关地址（前端调用地址）
@@ -43,6 +43,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageDataMerchantListItem'
+  /api/merchant/aftersale/{aftersaleNo}/detail:
+    get:
+      tags:
+        - 商家售后
+      summary: 商家售后单详情查询
+      description: |
+        商家查询指定售后单的详细信息，包含：
+        - 售后单基础信息（状态、类型、原因、金额）
+        - 用户信息
+        - 订单商品信息
+        - 用户申请凭证
+        - 仲裁信息（如果有）
+        - 处理历史
+      operationId: getAftersaleDetailForMerchant
+      parameters:
+        - name: aftersaleNo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: AS20260518000001
+        - name: merchantId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 2001
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AftersaleMerchantDetailResponse'
+        default:
+          description: 错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResult'
   /api/merchant/aftersale/dashboard:
     get:
       tags:
@@ -493,6 +534,213 @@ components:
           example: "success"
         data:
           type: null
+    AftersaleMerchantDetailResponse:
+      type: object
+      description: |
+        商家端售后单详情响应
+        包含：基础信息、用户信息、订单商品信息、凭证、仲裁信息（如果有）、处理历史
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        orderSn:
+          type: string
+          description: 订单号
+          example: "ON20260518000001"
+        subOrderSn:
+          type: string
+          description: 子订单号
+          example: "SO20260518000001"
+        status:
+          type: integer
+          description: 主状态编码
+          example: 10
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PENDING_MERCHANT_AUDIT"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "待商家审核"
+        aftersaleType:
+          type: string
+          description: 售后类型编码
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文文案
+          example: "退货退款"
+        aftersaleReason:
+          type: string
+          description: 售后原因编码
+          example: "QUALITY_ISSUE"
+        aftersaleReasonText:
+          type: string
+          description: 售后原因中文文案
+          example: "质量问题"
+        applyRefundAmount:
+          type: number
+          description: 申请退款金额
+          example: 100.00
+        actualRefundAmount:
+          type: number
+          description: 实际退款金额
+          example: 99.00
+        applyRefundQuantity:
+          type: integer
+          description: 申请退款数量
+          example: 1
+        description:
+          type: string
+          description: 问题描述
+          example: "商品有质量问题，外包装破损"
+        merchantNote:
+          type: string
+          description: 商家备注
+          example: "已联系客户协商"
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+        userInfo:
+          $ref: '#/components/schemas/MerchantUserInfo'
+        orderInfo:
+          $ref: '#/components/schemas/MerchantOrderInfo'
+        attachments:
+          type: array
+          description: 用户申请凭证图片列表
+          items:
+            $ref: '#/components/schemas/Attachment'
+        arbitrationInfo:
+          $ref: '#/components/schemas/MerchantArbitrationInfo'
+        events:
+          type: array
+          description: 处理历史（按时间倒序）
+          items:
+            $ref: '#/components/schemas/MerchantEventRecord'
+    MerchantUserInfo:
+      type: object
+      description: 用户信息
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+          example: 10001
+    MerchantOrderInfo:
+      type: object
+      description: 售后订单商品信息
+      properties:
+        skuCode:
+          type: string
+          description: SKU编码
+          example: "SKU20260518000001"
+        skuName:
+          type: string
+          description: SKU名称/商品名称
+          example: "iPhone 15 Pro Max 256G"
+        productImage:
+          type: string
+          description: 商品主图（CDN URL）
+          example: "https://imgcdn.aimkeji.com/product/iphone15.jpg"
+        quantity:
+          type: integer
+          description: 购买数量
+          example: 1
+    MerchantArbitrationInfo:
+      type: object
+      description: 商家视角仲裁信息
+      properties:
+        caseNo:
+          type: string
+          description: 仲裁单号
+          example: "AB20260526000001"
+        status:
+          type: string
+          description: 仲裁状态
+          example: "PENDING_ARBITRATION"
+        statusText:
+          type: string
+          description: 仲裁状态文案
+          example: "待判定"
+        userEvidenceText:
+          type: string
+          description: 用户举证说明
+          example: "商品存在明显质量问题"
+        arbitrationResult:
+          type: string
+          description: 平台仲裁结果（已完成时）
+          example: "SUPPORT_REFUND"
+        arbitrationResultText:
+          type: string
+          description: 仲裁结果文案（已完成时）
+          example: "支持退款"
+        refundAmount:
+          type: number
+          description: 仲裁退款金额（已完成时）
+          example: 99.00
+        requestedAt:
+          type: string
+          format: date-time
+          description: 申请仲裁时间
+          example: "2026-05-20 14:30:00"
+    MerchantEventRecord:
+      type: object
+      description: 处理历史记录
+      properties:
+        eventType:
+          type: string
+          description: 事件类型编码
+          example: "MERCHANT_AUDIT_PASS"
+        eventText:
+          type: string
+          description: 事件类型文案
+          example: "商家审核通过"
+        operatorType:
+          type: integer
+          description: 操作人类型：1=用户 2=商家 3=平台 4=系统
+          example: 2
+        operatorTypeText:
+          type: string
+          description: 操作人类型文案
+          example: "商家"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 2001
+        operatorName:
+          type: string
+          description: 操作人名称
+          example: "XX旗舰店"
+        eventDesc:
+          type: string
+          description: 事件描述/备注
+          example: "商家同意退货退款"
+        occurredAt:
+          type: string
+          format: date-time
+          description: 发生时间
+          example: "2026-05-18 14:00:00"
+    Attachment:
+      type: object
+      description: 附件信息
+      properties:
+        objectKey:
+          type: string
+          description: OSS Object Key
+          example: "aftersale/attachments/xxx.jpg"
+        cdn:
+          type: string
+          description: CDN URL
+          example: "https://imgcdn.aimkeji.com/xxx.jpg"
+        mimeType:
+          type: string
+          description: MIME类型
+          example: "image/jpeg"
   securitySchemes:
     BearerAuth:
       type: http

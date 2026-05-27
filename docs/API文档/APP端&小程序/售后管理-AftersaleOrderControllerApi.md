@@ -3,7 +3,7 @@ service: mall-toc-service
 yaml_file: mall-toc-service-openapi.yaml
 md_file: 售后管理-AftersaleOrderControllerApi.md
 program_id: B-2026-001-aftersale-revamp
-version: v1.1.0
+version: v1.2.0
 updated_at: 2026-05-26
 controller: AftersaleOrderController
 module: AftersaleOrder
@@ -323,6 +323,7 @@ GET /mall-toc-service/api/user/aftersale/detail?aftersaleNo=AS20260518000001&use
 | actualRefundAmount | BigDecimal | 实际退款金额（审核后可能调整） |
 | applyRefundQuantity | Integer | 申请退款数量 |
 | description | String | 问题描述 |
+| orderInfo | TocOrderInfo | 售后订单商品信息 |
 | attachmentKeys | Array<String> | 凭证图片OSS Key列表 |
 | returnLogisticsCompany | String | 用户退货物流公司 |
 | returnLogisticsNo | String | 用户退货物流单号 |
@@ -380,6 +381,15 @@ GET /mall-toc-service/api/user/aftersale/detail?aftersaleNo=AS20260518000001&use
   }
 }
 ```
+
+**TocOrderInfo 结构**：
+
+| 字段 | 类型 | 说明 | 示例 |
+|------|------|------|------|
+| skuCode | String | SKU编码 | SKU20260518000001 |
+| skuName | String | 商品名称 | iPhone 15 Pro Max 256G |
+| productImage | String | 商品主图（CDN URL） | https://imgcdn.aimkeji.com/product/iphone15.jpg |
+| quantity | Integer | 购买数量 | 1 |
 
 ---
 

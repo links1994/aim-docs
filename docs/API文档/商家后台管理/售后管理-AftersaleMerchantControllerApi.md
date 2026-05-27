@@ -3,7 +3,7 @@ service: mall-tob-service
 yaml_file: mall-tob-service-openapi.yaml
 md_file: 售后管理-AftersaleMerchantControllerApi.md
 program_id: B-2026-001-aftersale-revamp
-version: v1.5.0
+version: v1.7.0
 updated_at: 2026-05-26
 controller: AftersaleMerchantController
 module: AftersaleMerchant
@@ -17,6 +17,7 @@ title: 商家售后管理
 | 方法 | 路径 | 说明 | 操作人 |
 |------|------|------|--------|
 | POST | `/mall-merchant/api/merchant/aftersale/page-list` | 售后列表查询 | 商家 |
+| GET | `/mall-merchant/api/merchant/aftersale/{aftersaleNo}/detail` | 售后单详情查询 | 商家 |
 | GET | `/mall-merchant/api/merchant/aftersale/dashboard` | 商家售后仪表盘 | 商家 |
 | POST | `/mall-merchant/api/merchant/aftersale/update-note` | 修改商家备注 | 商家 |
 | POST | `/mall-merchant/api/merchant/aftersale/audit` | 商家审核（通过/拒绝） | 商家 |
@@ -142,11 +143,131 @@ title: 商家售后管理
     ]
   }
 }
+}
+
+---
+
+### 2. 售后单详情查询
+
+**路径**：`GET /mall-merchant/api/merchant/aftersale/{aftersaleNo}/detail`
+
+**描述**：商家查询指定售后单的详细信息，包含：基础信息、用户信息、订单商品信息、用户申请凭证、仲裁信息（如果有）、处理历史
+
+#### 请求参数（Path + Query）
+
+| 参数 | 类型 | 必填 | 位置 | 说明 |
+|------|------|------|------|------|
+| aftersaleNo | String | 是 | Path | 售后单号 |
+| merchantId | Long | 是 | Query | 商家ID |
+
+#### 请求示例
+
+```
+GET /mall-merchant/api/merchant/aftersale/AS20260518000001/detail?merchantId=2001
+```
+
+#### 响应参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| aftersaleNo | String | 售后单号 |
+| orderSn | String | 订单号 |
+| subOrderSn | String | 子订单号 |
+| status | Integer | 主状态编码 |
+| statusName | String | 主状态枚举名 |
+| statusText | String | 主状态中文文案 |
+| aftersaleType | String | 售后类型编码 |
+| aftersaleTypeText | String | 售后类型中文文案 |
+| aftersaleReason | String | 售后原因编码 |
+| aftersaleReasonText | String | 售后原因中文文案 |
+| applyRefundAmount | BigDecimal | 申请退款金额 |
+| actualRefundAmount | BigDecimal | 实际退款金额 |
+| applyRefundQuantity | Integer | 申请退款数量 |
+| description | String | 问题描述 |
+| merchantNote | String | 商家备注 |
+| createdAt | String | 创建时间 |
+| userInfo | Object | 用户信息 |
+| userInfo.userId | Long | 用户ID |
+| orderInfo | Object | 售后订单商品信息 |
+| orderInfo.skuCode | String | SKU编码 |
+| orderInfo.skuName | String | SKU名称/商品名称 |
+| orderInfo.productImage | String | 商品主图 |
+| orderInfo.quantity | Integer | 购买数量 |
+| attachments | Array | 用户申请凭证图片列表 |
+| arbitrationInfo | Object | 仲裁信息（如果有） |
+| arbitrationInfo.caseNo | String | 仲裁单号 |
+| arbitrationInfo.status | String | 仲裁状态 |
+| arbitrationInfo.statusText | String | 仲裁状态文案 |
+| arbitrationInfo.userEvidenceText | String | 用户举证说明 |
+| arbitrationInfo.arbitrationResult | String | 仲裁结果（已完成时） |
+| arbitrationInfo.arbitrationResultText | String | 仲裁结果文案 |
+| events | Array | 处理历史（按时间倒序） |
+| events[].eventType | String | 事件类型编码 |
+| events[].eventText | String | 事件类型文案 |
+| events[].operatorType | Integer | 操作人类型 |
+| events[].operatorTypeText | String | 操作人类型文案 |
+| events[].operatorName | String | 操作人名称 |
+| events[].eventDesc | String | 事件描述 |
+| events[].occurredAt | String | 发生时间 |
+
+#### 响应示例
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "aftersaleNo": "AS20260518000001",
+    "orderSn": "ON20260518000001",
+    "subOrderSn": "SO20260518000001",
+    "status": 10,
+    "statusName": "PENDING_MERCHANT_AUDIT",
+    "statusText": "待商家审核",
+    "aftersaleType": "RETURN_AND_REFUND",
+    "aftersaleTypeText": "退货退款",
+    "aftersaleReason": "QUALITY_ISSUE",
+    "aftersaleReasonText": "质量问题",
+    "applyRefundAmount": 100.00,
+    "actualRefundAmount": null,
+    "applyRefundQuantity": 1,
+    "description": "商品有质量问题，外包装破损",
+    "merchantNote": "已联系客户协商",
+    "createdAt": "2026-05-18 10:00:00",
+    "userInfo": {
+      "userId": 10001
+    },
+    "orderInfo": {
+      "skuCode": "SKU20260518000001",
+      "skuName": "iPhone 15 Pro Max 256G",
+      "productImage": "https://imgcdn.aimkeji.com/product/iphone15.jpg",
+      "quantity": 1
+    },
+    "attachments": [
+      {
+        "objectKey": "aftersale/attachments/xxx.jpg",
+        "cdn": "https://imgcdn.aimkeji.com/xxx.jpg",
+        "mimeType": "image/jpeg"
+      }
+    ],
+    "arbitrationInfo": null,
+    "events": [
+      {
+        "eventType": "APPLY",
+        "eventText": "用户提交售后申请",
+        "operatorType": 1,
+        "operatorTypeText": "用户",
+        "operatorName": "张三",
+        "eventDesc": "用户提交退货退款申请",
+        "occurredAt": "2026-05-18 10:00:00"
+      }
+    ]
+  }
+}
 ```
 
 ---
 
-### 2. 商家售后仪表盘
+### 3. 商家售后仪表盘
 
 **路径**：`GET /mall-merchant/api/merchant/aftersale/dashboard`
 

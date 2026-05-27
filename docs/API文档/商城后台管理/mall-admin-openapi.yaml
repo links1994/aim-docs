@@ -4,10 +4,10 @@ info:
   description: |
     管理后台售后管理接口，供运营人员调用。
     - 售后列表查询（分页）
-    - 仲裁工单列表查询
+    - 售后详情查询
     - 修改运营备注
     - 售后状态/类型枚举查询
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: /mall-admin
     description: 网关地址（前端调用地址）
@@ -47,31 +47,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageDataAdminListItem'
-  /api/admin/aftersale/arbitration/page-list:
-    post:
+  /api/admin/aftersale/{aftersaleNo}/detail:
+    get:
       tags:
         - 售后管理（管理后台）
-      summary: 仲裁工单列表查询
-      description: 管理后台分页查询仲裁工单列表（仅 status IN 60/70/80 仲裁段）
-      operationId: pageListArbitration
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ArbitrationPageApiRequest'
-            example:
-              statusList: [60, 70, 80]
-              keyword: "AS2026"
-              pageNum: 1
-              pageSize: 20
+      summary: 售后详情查询（管理后台）
+      description: 管理后台查询售后单详情，包含用户信息、商品信息、商家信息、物流信息、售后记录等
+      operationId: getAftersaleAdminDetail
+      parameters:
+        - name: aftersaleNo
+          in: path
+          required: true
+          description: 售后单号
+          example: "AS20260518000001"
+          schema:
+            type: string
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PageDataArbitrationListItem'
+                $ref: '#/components/schemas/AftersaleAdminDetailResponse'
   /api/admin/aftersale/update-note:
     post:
       tags:
@@ -123,7 +120,106 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TypeOptionList'
-components:
+  /api/admin/arbitration/page-list:
+    post:
+      tags:
+        - 仲裁管理（管理后台）
+      summary: 仲裁工单列表查询
+      description: 管理后台分页查询仲裁工单列表（仅 status IN 60/70/80 仲裁段）
+      operationId: pageListArbitration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArbitrationPageApiRequest'
+            example:
+              statusList: [60, 70, 80]
+              keyword: "AS2026"
+              pageNum: 1
+              pageSize: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDataArbitrationListItem'
+  /api/admin/arbitration/{caseNo}/detail:
+    get:
+      tags:
+        - 仲裁管理（管理后台）
+      summary: 仲裁工单详情查询
+      description: 查询仲裁工单详情，包含双方举证材料、诉求及提交时间
+      operationId: getArbitrationDetail
+      parameters:
+        - name: caseNo
+          in: path
+          required: true
+          description: 仲裁单号
+          example: "AR20260518000001"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationDetailResponse'
+  /api/admin/arbitration/tab-counts:
+    get:
+      tags:
+        - 仲裁管理（管理后台）
+      summary: 仲裁 Tab 计数查询
+      description: 查询各仲裁 Tab 的待处理数量，用于显示 Tab 徽标
+      operationId: getArbitrationTabCounts
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationTabCountsResponse'
+  /api/admin/arbitration/arbitrate:
+    post:
+      tags:
+        - 仲裁管理（管理后台）
+      summary: 平台仲裁判定
+      description: 平台对仲裁工单进行最终判定
+      operationId: arbitrate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArbitrateApiRequest'
+            example:
+              caseNo: "AR20260518000001"
+              arbitrationResult: "SUPPORT_REFUND"
+              refundAmount: 99.00
+              arbitrationOpinion: "经核实，用户举证充分，商家未能提供有效反驳证据，同意全额退款"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/admin/arbitration/enums/arbitration-result:
+    get:
+      tags:
+        - 仲裁管理（管理后台）
+      summary: 仲裁判定结果枚举
+      description: 查询仲裁判定结果枚举列表（供前端下拉筛选）
+      operationId: getArbitrationResultEnums
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationResultOptionList'
   schemas:
     AftersaleAdminPageApiRequest:
       type: object
@@ -397,6 +493,299 @@ components:
           format: date-time
           description: 创建时间
           example: "2026-05-18 10:00:00"
+    ArbitrateApiRequest:
+      type: object
+      description: 仲裁判定请求
+      required:
+        - caseNo
+        - arbitrationResult
+      properties:
+        caseNo:
+          type: string
+          description: 仲裁单号
+          example: "AR20260518000001"
+        arbitrationResult:
+          type: string
+          description: 仲裁结果（SUPPORT_REFUND=支持退款/SUPPORT_RETURN=支持退货/REJECT=驳回）
+          example: "SUPPORT_REFUND"
+        refundAmount:
+          type: number
+          format: decimal
+          description: 判定退款金额
+          example: 99.00
+        arbitrationOpinion:
+          type: string
+          description: 仲裁意见
+          example: "经核实，用户举证充分，同意全额退款"
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+          example: 30001
+    AftersaleAdminDetailResponse:
+      type: object
+      description: 管理后台售后详情响应
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+        orderSn:
+          type: string
+          description: 订单号
+        subOrderSn:
+          type: string
+          description: 子订单号
+        status:
+          type: integer
+          description: 主状态编码
+        statusName:
+          type: string
+          description: 主状态枚举名
+        statusText:
+          type: string
+          description: 主状态中文文案
+        aftersaleType:
+          type: string
+          description: 售后类型
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+        actualRefundAmount:
+          type: number
+          format: decimal
+          description: 实际退款金额
+        refundReason:
+          type: string
+          description: 退款原因
+        refundDesc:
+          type: string
+          description: 退款说明
+        userInfo:
+          $ref: '#/components/schemas/UserInfoModule'
+        orderInfo:
+          $ref: '#/components/schemas/AftersaleOrderInfoModule'
+        merchantInfo:
+          $ref: '#/components/schemas/MerchantInfoModule'
+        logisticsInfo:
+          $ref: '#/components/schemas/LogisticsInfoModule'
+        returnAddress:
+          $ref: '#/components/schemas/ReturnAddressModule'
+        aftersaleEvents:
+          type: array
+          description: 售后记录列表
+          items:
+            $ref: '#/components/schemas/AftersaleEventRecord'
+        adminNote:
+          type: string
+          description: 运营备注
+        merchantNote:
+          type: string
+          description: 商家备注
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+    UserInfoModule:
+      type: object
+      description: 用户信息模块
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+        userName:
+          type: string
+          description: 用户昵称
+        userPhone:
+          type: string
+          description: 脱敏手机号
+          example: "138****5678"
+        userLevel:
+          type: string
+          description: 用户等级
+          example: "VIP"
+    AftersaleOrderInfoModule:
+      type: object
+      description: 售后订单商品信息模块
+      properties:
+        productId:
+          type: integer
+          format: int64
+          description: 商品ID
+        productName:
+          type: string
+          description: 商品名称
+        productImage:
+          type: string
+          description: 商品图片URL
+        skuId:
+          type: integer
+          format: int64
+          description: SKU ID
+        skuDesc:
+          type: string
+          description: SKU规格
+        quantity:
+          type: integer
+          description: 数量
+        productPrice:
+          type: number
+          format: decimal
+          description: 商品单价
+    MerchantInfoModule:
+      type: object
+      description: 商家信息模块
+      properties:
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID
+        merchantName:
+          type: string
+          description: 商家名称
+    LogisticsInfoModule:
+      type: object
+      description: 物流信息模块
+      properties:
+        logisticsNo:
+          type: string
+          description: 物流单号
+        logisticsCompany:
+          type: string
+          description: 物流公司
+        logisticsStatus:
+          type: string
+          description: 物流状态
+    ReturnAddressModule:
+      type: object
+      description: 退货地址模块
+      properties:
+        receiverName:
+          type: string
+          description: 收货人姓名
+        receiverPhone:
+          type: string
+          description: 收货人电话
+        receiverAddress:
+          type: string
+          description: 收货地址
+    AftersaleEventRecord:
+      type: object
+      description: 售后事件记录
+      properties:
+        eventType:
+          type: string
+          description: 事件类型
+        eventText:
+          type: string
+          description: 事件类型文案
+        operatorType:
+          type: integer
+          description: 操作人类型（1=用户 2=商家 3=平台 4=系统）
+        operatorName:
+          type: string
+          description: 操作人名称
+        eventDesc:
+          type: string
+          description: 事件描述
+        attachments:
+          type: array
+          description: 附件列表
+          items:
+            $ref: '#/components/schemas/AttachmentInfo'
+        occurredAt:
+          type: string
+          format: date-time
+          description: 发生时间
+    AttachmentInfo:
+      type: object
+      description: 附件信息
+      properties:
+        url:
+          type: string
+          description: 附件URL
+        type:
+          type: string
+          description: 附件类型（IMAGE/VIDEO/FILE）
+    ArbitrationDetailResponse:
+      type: object
+      description: 仲裁工单详情响应
+      properties:
+        caseNo:
+          type: string
+          description: 仲裁单号
+        aftersaleNo:
+          type: string
+          description: 售后单号
+        status:
+          type: string
+          description: 状态（PENDING_EVIDENCE/PENDING_ARBITRATION/COMPLETED）
+        userEvidence:
+          $ref: '#/components/schemas/EvidenceInfo'
+        merchantEvidence:
+          $ref: '#/components/schemas/EvidenceInfo'
+        result:
+          $ref: '#/components/schemas/ArbitrationResultInfo'
+    EvidenceInfo:
+      type: object
+      description: 举证信息
+      properties:
+        hasSubmitted:
+          type: boolean
+          description: 是否已提交
+        evidenceText:
+          type: string
+          description: 举证说明
+        attachments:
+          type: array
+          description: 附件列表
+          items:
+            $ref: '#/components/schemas/AttachmentInfo'
+        submittedAt:
+          type: string
+          format: date-time
+          description: 提交时间
+        userDemand:
+          type: string
+          description: 用户诉求
+    ArbitrationResultInfo:
+      type: object
+      description: 仲裁结果信息
+      properties:
+        arbitrationResult:
+          type: string
+          description: 仲裁结果（SUPPORT_REFUND/SUPPORT_RETURN/REJECT）
+        arbitrationOpinion:
+          type: string
+          description: 仲裁意见
+        refundAmount:
+          type: number
+          format: decimal
+          description: 判定退款金额
+        operatorId:
+          type: integer
+          format: int64
+          description: 操作人ID
+        operatorName:
+          type: string
+          description: 操作人名称
+    ArbitrationTabCountsResponse:
+      type: object
+      description: 仲裁Tab计数响应
+      properties:
+        pendingEvidence:
+          type: integer
+          description: 待举证数量
+        pendingArbitration:
+          type: integer
+          description: 待判定数量
+        completed:
+          type: integer
+          description: 已判定数量
     AftersaleStatusOptionDTO:
       type: object
       description: 售后状态枚举选项
@@ -453,6 +842,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AftersaleTypeOptionDTO'
+    ArbitrationResultOptionDTO:
+      type: object
+      description: 仲裁结果枚举选项
+      properties:
+        code:
+          type: string
+          description: 结果编码
+          example: "SUPPORT_REFUND"
+        text:
+          type: string
+          description: 结果文案
+          example: "支持退款"
+    ArbitrationResultOptionList:
+      type: object
+      description: 仲裁结果枚举列表响应
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArbitrationResultOptionDTO'
     PageDataAdminListItem:
       type: object
       description: 分页响应（管理后台售后列表）

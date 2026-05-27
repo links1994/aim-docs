@@ -3,7 +3,7 @@ service: mall-admin
 yaml_file: mall-admin-openapi.yaml
 md_file: 售后管理-AftersaleAdminControllerApi.md
 program_id: B-2026-001-aftersale-revamp
-version: v1.0.0
+version: v1.1.0
 updated_at: 2026-05-26
 controller: AftersaleAdminController
 module: AftersaleAdmin
@@ -17,7 +17,7 @@ title: 售后管理
 | 方法 | 路径 | 说明 | 操作人 |
 |------|------|------|--------|
 | POST | `/mall-admin/api/admin/aftersale/page-list` | 售后列表查询（管理后台） | 管理员 |
-| POST | `/mall-admin/api/admin/aftersale/arbitration/page-list` | 仲裁工单列表查询 | 管理员 |
+| GET | `/mall-admin/api/admin/aftersale/{aftersaleNo}/detail` | 售后详情查询（管理后台） | 管理员 |
 | POST | `/mall-admin/api/admin/aftersale/update-note` | 修改运营备注 | 管理员 |
 | GET | `/mall-admin/api/admin/aftersale/enums/status` | 售后状态枚举 | 管理员 |
 | GET | `/mall-admin/api/admin/aftersale/enums/type` | 售后类型枚举 | 管理员 |
@@ -155,43 +155,43 @@ title: 售后管理
 
 ---
 
-### 2. 仲裁工单列表查询
+### 2. 售后详情查询（管理后台）
 
-**路径**：`POST /mall-admin/api/admin/aftersale/arbitration/page-list`
+**路径**：`GET /mall-admin/api/admin/aftersale/{aftersaleNo}/detail`
 
-**描述**：管理后台分页查询仲裁工单列表（仅 status IN 60/70/80 仲裁段）
+**描述**：管理后台查询售后单详情，包含用户信息、商品信息、商家信息、物流信息、售后记录等
 
-#### 请求参数（Body）
+#### 请求参数（Path）
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| statusList | Array<Integer> | 否 | 仲裁状态列表（限定：60/70/80） |
-| keyword | String | 否 | 关键词（售后单号/订单号模糊搜索） |
-| merchantId | Long | 否 | 商家ID |
-| startTime | String | 否 | 查询开始时间，格式：yyyy-MM-dd HH:mm:ss |
-| endTime | String | 否 | 查询结束时间，格式：yyyy-MM-dd HH:mm:ss |
-| pageNum | Integer | 否 | 页码（默认1） |
-| pageSize | Integer | 否 | 每页条数（默认20） |
-| sortField | String | 否 | 排序字段（createTime/arbitrationApplyTime） |
-| sortOrder | String | 否 | 排序方向：asc/desc |
-
-#### 请求示例
-
-```json
-{
-  "statusList": [60, 70, 80],
-  "keyword": "AS2026",
-  "pageNum": 1,
-  "pageSize": 20
-}
-```
+| aftersaleNo | String | 是 | 售后单号 |
 
 #### 响应参数
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| totalCount | Long | 总记录数 |
-| items | Array<ArbitrationListItem> | 列表数据 |
+| aftersaleNo | String | 售后单号 |
+| orderSn | String | 订单号 |
+| subOrderSn | String | 子订单号 |
+| status | Integer | 主状态编码 |
+| statusName | String | 主状态枚举名 |
+| statusText | String | 主状态中文文案 |
+| aftersaleType | String | 售后类型 |
+| aftersaleTypeText | String | 售后类型中文 |
+| applyRefundAmount | BigDecimal | 申请退款金额 |
+| actualRefundAmount | BigDecimal | 实际退款金额 |
+| refundReason | String | 退款原因 |
+| refundDesc | String | 退款说明 |
+| userInfo | Object | 用户信息模块 |
+| orderInfo | Object | 售后订单商品信息模块 |
+| merchantInfo | Object | 商家信息模块 |
+| logisticsInfo | Object | 物流信息模块 |
+| returnAddress | Object | 退货地址模块 |
+| aftersaleEvents | Array | 售后记录列表 |
+| adminNote | String | 运营备注 |
+| merchantNote | String | 商家备注 |
+| createdAt | String | 创建时间 |
 
 #### 响应示例
 
@@ -200,26 +200,32 @@ title: 售后管理
   "code": 200,
   "message": "success",
   "data": {
-    "totalCount": 100,
-    "items": [
-      {
-        "aftersaleNo": "AS20260518000001",
-        "orderSn": "ON20260518000001",
-        "userId": 10001,
-        "merchantId": 2001,
-        "merchantName": "XX旗舰店",
-        "status": 80,
-        "statusName": "PLATFORM_ARBITRATION",
-        "statusText": "平台介入中",
-        "aftersaleType": "RETURN_AND_REFUND",
-        "aftersaleTypeName": "RETURN_AND_REFUND",
-        "aftersaleTypeText": "退货退款",
-        "applyRefundAmount": 100.00,
-        "arbitrationDeadline": "2026-05-25 10:00:00",
-        "arbitrationApplyTime": "2026-05-20 10:00:00",
-        "createdAt": "2026-05-18 10:00:00"
-      }
-    ]
+    "aftersaleNo": "AS20260518000001",
+    "orderSn": "ON20260518000001",
+    "status": 10,
+    "statusName": "PENDING_MERCHANT_AUDIT",
+    "statusText": "待商家审核",
+    "aftersaleType": "RETURN_AND_REFUND",
+    "aftersaleTypeText": "退货退款",
+    "applyRefundAmount": 100.00,
+    "userInfo": {
+      "userId": 10001,
+      "userName": "张三",
+      "userPhone": "138****5678",
+      "userLevel": "VIP"
+    },
+    "orderInfo": {
+      "productId": 1001,
+      "productName": "夏季连衣裙",
+      "skuDesc": "红色/L码"
+    },
+    "merchantInfo": {
+      "merchantId": 2001,
+      "merchantName": "XX旗舰店"
+    },
+    "adminNote": "已联系商家确认",
+    "merchantNote": "商品已下架",
+    "createdAt": "2026-05-18 10:00:00"
   }
 }
 ```
