@@ -122,6 +122,7 @@ title: 仲裁管理
         "caseNo": "AR20260518000001",
         "aftersaleNo": "AS20260518000001",
         "orderSn": "ON20260518000001",
+        "subOrderSn": "SO20260518000001",
         "userId": 10001,
         "merchantId": 2001,
         "merchantName": "XX旗舰店",
@@ -159,6 +160,8 @@ title: 仲裁管理
 |------|------|------|
 | caseNo | String | 仲裁单号 |
 | aftersaleNo | String | 售后单号 |
+| orderSn | String | 订单号 |
+| subOrderSn | String | 子订单号 |
 | status | String | 状态（PENDING_EVIDENCE=待举证/PENDING_ARBITRATION=待判定/COMPLETED=已判定） |
 | userEvidence | Object | 用户举证信息 |
 | merchantEvidence | Object | 商家举证信息 |
@@ -173,6 +176,8 @@ title: 仲裁管理
   "data": {
     "caseNo": "AR20260518000001",
     "aftersaleNo": "AS20260518000001",
+    "orderSn": "ON20260518000001",
+    "subOrderSn": "SO20260518000001",
     "status": "PENDING_ARBITRATION",
     "userEvidence": {
       "hasSubmitted": true,
