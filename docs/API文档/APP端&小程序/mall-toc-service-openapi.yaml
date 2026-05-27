@@ -1,0 +1,587 @@
+openapi: 3.0.3
+info:
+  title: C端售后 API（mall-toc-service BFF）
+  description: |
+    C端售后订单管理接口，供移动端 APP 调用。
+    - 用户申请售后、取消售后
+    - 用户填写退货物流、确认收货
+    - 用户申请平台介入
+    - 售后详情查询
+    - 快递公司列表查询（本期仅定义接口）
+  version: 1.1.0
+servers:
+  - url: /mall-toc-service
+    description: 网关地址（前端调用地址）
+tags:
+  - name: C端售后
+    description: C端售后订单管理（用户视角）
+paths:
+  /api/user/aftersale/apply:
+    post:
+      tags:
+        - C端售后
+      summary: 申请售后
+      description: 用户发起售后申请，支持未发货仅退款、退货退款、换货、补发四种类型
+      operationId: applyAftersale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyAftersaleApiRequest'
+            example:
+              subOrderSn: "SO20260518000001"
+              aftersaleType: "RETURN_AND_REFUND"
+              aftersaleReason: "QUALITY_ISSUE"
+              applyRefundAmount: 100.00
+              applyRefundQuantity: 1
+              description: "商品有质量问题，收到时外包装破损"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyAftersaleApiResponse'
+              example:
+                code: 200
+                data:
+                  aftersaleNo: "AS20260518000001"
+                  status: 10
+                  statusName: "PENDING_MERCHANT_AUDIT"
+                  statusText: "待商家审核"
+                  createdAt: "2026-05-18 10:00:00"
+                message: "success"
+  /api/user/aftersale/cancel:
+    post:
+      tags:
+        - C端售后
+      summary: 取消售后
+      description: 用户取消已提交的售后申请，仅在待审核状态下可取消
+      operationId: cancelAftersale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCancelApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              cancelReason: "不需要退货了"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/user/aftersale/ship-back:
+    post:
+      tags:
+        - C端售后
+      summary: 用户发货退回
+      description: 用户填写退货物流信息，将商品寄回给商家
+      operationId: shipBackAftersale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserShipBackApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              logisticsCompany: "顺丰速运"
+              logisticsNo: "SF1234567890"
+              attachmentKeys: ["aftersale/2026/05/0a1b2c3d.jpg"]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/user/aftersale/confirm:
+    post:
+      tags:
+        - C端售后
+      summary: 确认收货/退款
+      description: 用户确认收到换货商品，售后流程完成
+      operationId: confirmAftersale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserConfirmApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/user/aftersale/request-arbitration:
+    post:
+      tags:
+        - C端售后
+      summary: 申请平台介入
+      description: 用户申请平台介入处理售后争议
+      operationId: requestArbitration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestArbitrationApiRequest'
+            example:
+              aftersaleNo: "AS20260518000001"
+              arbitrationReason: "商家验货结果不合理，申请平台介入"
+              evidenceKeys: ["arbitration/2026/05/evidence1.jpg"]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResultVoid'
+  /api/user/aftersale/detail:
+    get:
+      tags:
+        - C端售后
+      summary: 售后详情（用户视角）
+      description: 获取售后单详细信息，包含协商历史、退货地址等（手机号脱敏）
+      operationId: getAftersaleDetail
+      parameters:
+        - name: aftersaleNo
+          in: query
+          required: true
+          description: 售后单号
+          schema:
+            type: string
+            example: "AS20260518000001"
+        - name: userId
+          in: query
+          required: true
+          description: 用户ID
+          schema:
+            type: integer
+            format: int64
+            example: 10001
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AftersaleDetailResponse'
+  /api/user/aftersale/express-companies:
+    get:
+      tags:
+        - C端售后
+      summary: 查询快递公司列表
+      description: 查询快递公司列表，供用户寄回快递时选择。本期仅定义接口结构，返回空列表。
+      operationId: getExpressCompanies
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "success"
+                  data:
+                    type: array
+                    description: 快递公司列表
+                    items:
+                      $ref: '#/components/schemas/ExpressCompanyResponse'
+                example:
+                  code: 200
+                  message: "success"
+                  data:
+                    - expressCode: "shunfeng"
+                      expressName: "顺丰速运"
+                    - expressCode: "yuantong"
+                      expressName: "圆通速递"
+                    - expressCode: "zhongtong"
+                      expressName: "中通快递"
+components:
+  schemas:
+    ApplyAftersaleApiRequest:
+      type: object
+      description: 用户发起售后申请请求
+      required:
+        - subOrderSn
+        - aftersaleType
+        - applyRefundAmount
+      properties:
+        subOrderSn:
+          type: string
+          description: 子订单号
+          example: "SO20260518000001"
+        aftersaleType:
+          type: string
+          description: 售后类型：REFUND_ONLY_BEFORE_SHIP（未发货仅退款）/ RETURN_AND_REFUND（退货退款）/ EXCHANGE（换货）/ RESEND（补发）
+          example: "RETURN_AND_REFUND"
+        aftersaleReason:
+          type: string
+          description: 售后原因：QUALITY_ISSUE/WRONG_ITEM/NOT_AS_DESCRIBED/CHANGED_MIND/DELAYED_DELIVERY/OTHER
+          example: "QUALITY_ISSUE"
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+          example: 100.00
+        applyRefundQuantity:
+          type: integer
+          description: 申请退款商品数量
+          example: 1
+        description:
+          type: string
+          description: 问题描述
+          example: "商品有质量问题"
+        attachments:
+          type: array
+          description: 凭证图片列表（后端代理上传返回的 cdn + objectKey，最多 9 张）
+          items:
+            $ref: '#/components/schemas/AttachmentDTO'
+    UserCancelApiRequest:
+      type: object
+      description: 用户取消售后请求
+      required:
+        - aftersaleNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        cancelReason:
+          type: string
+          description: 取消原因
+          example: "不需要退货了"
+    UserShipBackApiRequest:
+      type: object
+      description: 用户填写退货物流请求
+      required:
+        - aftersaleNo
+        - logisticsNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        logisticsCompany:
+          type: string
+          description: 物流公司
+          example: "顺丰速运"
+        logisticsNo:
+          type: string
+          description: 物流单号
+          example: "SF1234567890"
+        attachmentKeys:
+          type: array
+          description: 凭证图片OSS Key列表
+          items:
+            type: string
+    UserConfirmApiRequest:
+      type: object
+      description: 用户确认收到换货请求
+      required:
+        - aftersaleNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+    RequestArbitrationApiRequest:
+      type: object
+      description: 申请平台介入请求
+      required:
+        - aftersaleNo
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        arbitrationReason:
+          type: string
+          description: 仲裁原因
+          example: "商家验货结果不合理，申请平台介入"
+        evidenceKeys:
+          type: array
+          description: 举证图片OSS Key列表
+          items:
+            type: string
+    ApplyAftersaleApiResponse:
+      type: object
+      description: 售后申请响应
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        status:
+          type: integer
+          description: 主状态编码
+          example: 10
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PENDING_MERCHANT_AUDIT"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "待商家审核"
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+    AftersaleDetailResponse:
+      type: object
+      description: APP端售后详情响应（用户视角）
+      properties:
+        aftersaleNo:
+          type: string
+          description: 售后单号
+          example: "AS20260518000001"
+        orderSn:
+          type: string
+          description: 订单号
+          example: "ON20260518000001"
+        subOrderSn:
+          type: string
+          description: 子订单号
+          example: "SO20260518000001"
+        userId:
+          type: integer
+          format: int64
+          description: 用户ID
+          example: 10001
+        merchantId:
+          type: integer
+          format: int64
+          description: 商家ID
+          example: 2001
+        status:
+          type: integer
+          description: 主状态编码
+          example: 10
+        statusName:
+          type: string
+          description: 主状态枚举名
+          example: "PENDING_MERCHANT_AUDIT"
+        statusText:
+          type: string
+          description: 主状态中文文案
+          example: "待商家审核"
+        aftersaleType:
+          type: string
+          description: 售后类型编码
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeName:
+          type: string
+          description: 售后类型枚举名
+          example: "RETURN_AND_REFUND"
+        aftersaleTypeText:
+          type: string
+          description: 售后类型中文文案
+          example: "退货退款"
+        aftersaleReason:
+          type: string
+          description: 售后原因编码
+          example: "QUALITY_ISSUE"
+        aftersaleReasonName:
+          type: string
+          description: 售后原因枚举名
+          example: "QUALITY_ISSUE"
+        aftersaleReasonText:
+          type: string
+          description: 售后原因中文文案
+          example: "质量问题"
+        applyRefundAmount:
+          type: number
+          format: decimal
+          description: 申请退款金额
+          example: 100.00
+        actualRefundAmount:
+          type: number
+          format: decimal
+          description: 实际退款金额（审核后可能调整）
+          example: 99.00
+        applyRefundQuantity:
+          type: integer
+          description: 申请退款数量
+          example: 1
+        description:
+          type: string
+          description: 问题描述
+          example: "商品有质量问题"
+        attachmentKeys:
+          type: array
+          description: 凭证图片OSS Key列表
+          items:
+            type: string
+        returnLogisticsCompany:
+          type: string
+          description: 用户退货物流公司
+          example: "顺丰速运"
+        returnLogisticsNo:
+          type: string
+          description: 用户退货物流单号
+          example: "SF1234567890"
+        merchantLogisticsCompany:
+          type: string
+          description: 商家换货物流公司
+          example: "中通快递"
+        merchantLogisticsNo:
+          type: string
+          description: 商家换货物流单号
+          example: "ZT9876543210"
+        merchantContactPhone:
+          type: string
+          description: 商家联系电话（由Facade脱敏后输出）
+          example: "138****5678"
+        negotiationHistory:
+          type: array
+          description: 协商历史列表
+          items:
+            $ref: '#/components/schemas/NegotiationHistory'
+        returnAddress:
+          $ref: '#/components/schemas/ReturnAddress'
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          example: "2026-05-18 10:00:00"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+          example: "2026-05-18 12:00:00"
+    NegotiationHistory:
+      type: object
+      description: 协商历史项
+      properties:
+        actionType:
+          type: string
+          description: 操作类型编码
+          example: "MERCHANT_APPROVE"
+        actionTypeName:
+          type: string
+          description: 操作类型枚举名
+          example: "MERCHANT_APPROVE"
+        actionTypeText:
+          type: string
+          description: 操作类型中文文案
+          example: "商家审核通过"
+        operatorRole:
+          type: integer
+          description: 操作人角色编码：1=user 2=merchant 3=admin 4=system
+          example: 2
+        operatorRoleName:
+          type: string
+          description: 操作人角色枚举名
+          example: "MERCHANT"
+        operatorRoleText:
+          type: string
+          description: 操作人角色中文文案
+          example: "商家"
+        content:
+          type: string
+          description: 操作内容/备注
+          example: "同意退货退款"
+        attachmentKeys:
+          type: array
+          description: 附件OSS Key列表
+          items:
+            type: string
+        occurredAt:
+          type: string
+          format: date-time
+          description: 事件发生时间
+          example: "2026-05-18 11:00:00"
+    ReturnAddress:
+      type: object
+      description: 退货地址
+      properties:
+        receiverName:
+          type: string
+          description: 收件人姓名
+          example: "张三"
+        receiverPhone:
+          type: string
+          description: 收件人电话
+          example: "138****5678"
+        province:
+          type: string
+          description: 省
+          example: "广东省"
+        city:
+          type: string
+          description: 市
+          example: "深圳市"
+        district:
+          type: string
+          description: 区
+          example: "南山区"
+        detail:
+          type: string
+          description: 详细地址
+          example: "科技园南区xxx大厦xxx室"
+        postalCode:
+          type: string
+          description: 邮政编码
+          example: "518000"
+    AttachmentDTO:
+      type: object
+      description: 附件凭证（后端代理上传返回值）
+      properties:
+        cdn:
+          type: string
+          description: CDN/域名前缀（来自 OSS 配置 domain）
+          example: "https://imgcdn.aimkeji.com"
+        objectKey:
+          type: string
+          description: OSS 对象键，前端拼接 finalUrl = cdn + "/" + objectKey
+          example: "aftersale/2026/05/0a1b2c3d.jpg"
+    ExpressCompanyResponse:
+      type: object
+      description: 快递公司响应
+      properties:
+        expressCode:
+          type: string
+          description: 快递公司编码（快递100标准编码）
+          example: "shunfeng"
+        expressName:
+          type: string
+          description: 快递公司名称
+          example: "顺丰速运"
+    CommonResultVoid:
+      type: object
+      description: 通用响应（无数据）
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "success"
+        data:
+          type: null
+          description: 空数据
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 网关统一鉴权 Token
